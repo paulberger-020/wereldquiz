@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Wereldkwis">
+<title>Wereldkwis</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif; background: #f2f2f7; color: #1c1c1e; min-height: 100vh; }
+#app { max-width: 430px; margin: 0 auto; padding: 16px 16px calc(env(safe-area-inset-bottom) + 16px); }
+.screen { display: none; }
+.screen.active { display: block; }
+h1 { font-size: 28px; font-weight: 700; margin-bottom: 4px; }
+h2 { font-size: 22px; font-weight: 600; margin-bottom: 8px; }
+.muted { font-size: 14px; color: #8e8e93; }
+.section-label { font-size: 12px; font-weight: 600; color: #8e8e93; letter-spacing: 0.05em; margin-bottom: 8px; margin-top: 20px; }
+.card { background: #fff; border-radius: 16px; padding: 16px; margin-bottom: 12px; }
+.btn { display: block; width: 100%; padding: 14px 16px; border: none; border-radius: 12px; background: #fff; color: #1c1c1e; font-size: 16px; font-weight: 400; cursor: pointer; text-align: left; margin-bottom: 8px; -webkit-appearance: none; }
+.btn:active { opacity: 0.7; }
+.btn.primary { background: #1c1c1e; color: #fff; text-align: center; font-weight: 600; }
+.btn.correct { background: #d1f2d1; color: #1a5c1a; font-weight: 500; }
+.btn.wrong { background: #ffd6d6; color: #7a1c1c; font-weight: 500; }
+.type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 4px; }
+.type-btn { padding: 14px 8px; border: 2px solid #e5e5ea; border-radius: 12px; background: #fff; cursor: pointer; text-align: center; font-size: 13px; color: #8e8e93; -webkit-appearance: none; }
+.type-btn.selected { border-color: #1c1c1e; color: #1c1c1e; font-weight: 600; }
+.type-icon { font-size: 26px; display: block; margin-bottom: 4px; }
+.region-sel { display: flex; flex-wrap: wrap; gap: 6px; }
+.reg-btn { padding: 7px 14px; border: 1.5px solid #e5e5ea; border-radius: 20px; background: #fff; cursor: pointer; font-size: 13px; color: #8e8e93; -webkit-appearance: none; }
+.reg-btn.selected { border-color: #1c1c1e; color: #1c1c1e; font-weight: 600; background: #f2f2f7; }
+.mode-btn { display: flex; align-items: center; gap: 12px; padding: 16px; border: none; border-radius: 16px; background: #fff; cursor: pointer; width: 100%; text-align: left; margin-bottom: 10px; -webkit-appearance: none; }
+.mode-btn:active { opacity: 0.7; }
+.mode-icon { font-size: 28px; }
+.mode-title { font-size: 16px; font-weight: 600; color: #1c1c1e; }
+.mode-sub { font-size: 13px; color: #8e8e93; margin-top: 2px; }
+.score-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+.stat { background: #fff; border-radius: 12px; padding: 12px 8px; text-align: center; }
+.stat-val { font-size: 24px; font-weight: 700; color: #1c1c1e; }
+.stat-lbl { font-size: 11px; color: #8e8e93; margin-top: 2px; }
+.question-card { background: #fff; border-radius: 16px; padding: 20px; margin-bottom: 12px; text-align: center; }
+.flag { font-size: 72px; margin: 8px 0 16px; line-height: 1; }
+.question-text { font-size: 18px; font-weight: 500; line-height: 1.4; color: #1c1c1e; margin-bottom: 16px; }
+input[type=text] { width: 100%; padding: 14px 16px; font-size: 17px; border: 1.5px solid #e5e5ea; border-radius: 12px; background: #fff; color: #1c1c1e; margin-bottom: 10px; -webkit-appearance: none; outline: none; }
+input[type=text]:focus { border-color: #1c1c1e; }
+.correct-msg { font-size: 14px; color: #8e8e93; margin-bottom: 12px; }
+.correct-msg strong { color: #1c1c1e; }
+.progress-wrap { margin-bottom: 12px; }
+.progress-txt { font-size: 13px; color: #8e8e93; margin-bottom: 6px; }
+.progress-track { background: #e5e5ea; border-radius: 4px; height: 4px; overflow: hidden; }
+.progress-fill { height: 4px; background: #1c1c1e; border-radius: 4px; transition: width 0.3s; width: 0%; }
+.challenge-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+.chal-btn { padding: 12px; border: 1.5px solid #e5e5ea; border-radius: 12px; background: #fff; cursor: pointer; font-size: 16px; font-weight: 500; color: #8e8e93; text-align: center; -webkit-appearance: none; }
+.chal-btn.selected { border-color: #1c1c1e; color: #1c1c1e; background: #f2f2f7; }
+.hs-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f2f2f7; font-size: 14px; color: #1c1c1e; }
+.hs-row:last-child { border-bottom: none; }
+.hs-num { color: #8e8e93; }
+.result-big { text-align: center; font-size: 48px; margin: 16px 0 8px; }
+.result-msg { text-align: center; font-size: 17px; font-weight: 500; margin-bottom: 20px; }
+</style>
+</head>
+<body>
+<div id="app">
+
+<div id="home" class="screen active">
+  <div style="padding-top:8px; margin-bottom:4px;">
+    <h1>🌍 Wereldkwis</h1>
+    <p class="muted">Landen, hoofdsteden en vlaggen</p>
+  </div>
+
+  <div class="section-label">ONDERWERP</div>
+  <div class="type-grid">
+    <button class="type-btn selected" onclick="selectType('capitals')" id="tb-capitals"><span class="type-icon">🏛️</span>Hoofdsteden</button>
+    <button class="type-btn" onclick="selectType('countries')" id="tb-countries"><span class="type-icon">🗺️</span>Landen</button>
+    <button class="type-btn" onclick="selectType('flags')" id="tb-flags"><span class="type-icon">🏳️</span>Vlaggen</button>
+    <button class="type-btn" onclick="selectType('mix')" id="tb-mix"><span class="type-icon">🎲</span>Alles door elkaar</button>
+  </div>
+
+  <div class="section-label">REGIO</div>
+  <div class="region-sel">
+    <button class="reg-btn selected" onclick="selectRegion('all',this)">Heel de wereld</button>
+    <button class="reg-btn" onclick="selectRegion('europe',this)">Europa</button>
+    <button class="reg-btn" onclick="selectRegion('asia',this)">Azië</button>
+    <button class="reg-btn" onclick="selectRegion('americas',this)">Amerika</button>
+    <button class="reg-btn" onclick="selectRegion('africa',this)">Afrika</button>
+    <button class="reg-btn" onclick="selectRegion('oceania',this)">Oceanië</button>
+  </div>
+
+  <div class="section-label">MODUS</div>
+  <button class="mode-btn" onclick="startEndless()">
+    <span class="mode-icon">♾️</span>
+    <div><div class="mode-title">Eindeloos</div><div class="mode-sub">Blijf doorgaan, beat je highscore</div></div>
+  </button>
+  <button class="mode-btn" onclick="showScreen('challenge-setup')">
+    <span class="mode-icon">🏆</span>
+    <div><div class="mode-title">Challenge</div><div class="mode-sub">10, 15, 20 of 25 vragen</div></div>
+  </button>
+
+  <div class="section-label">HIGHSCORES</div>
+  <div class="card" id="hs-list"><p class="muted">Nog geen scores</p></div>
+</div>
+
+<div id="challenge-setup" class="screen">
+  <h2>Challenge</h2>
+  <div class="section-label">AANTAL VRAGEN</div>
+  <div class="challenge-grid">
+    <button class="chal-btn selected" onclick="selectChallenge(10,this)">10</button>
+    <button class="chal-btn" onclick="selectChallenge(15,this)">15</button>
+    <button class="chal-btn" onclick="selectChallenge(20,this)">20</button>
+    <button class="chal-btn" onclick="selectChallenge(25,this)">25</button>
+  </div>
+  <button class="btn primary" onclick="startChallenge()">Start challenge</button>
+  <button class="btn" style="text-align:center;color:#8e8e93;" onclick="showScreen('home')">Terug</button>
+</div>
+
+<div id="quiz" class="screen">
+  <div class="score-row">
+    <div class="stat"><div class="stat-val" id="q-good">0</div><div class="stat-lbl">Goed</div></div>
+    <div class="stat"><div class="stat-val" id="q-wrong">0</div><div class="stat-lbl">Fout</div></div>
+    <div class="stat"><div class="stat-val" id="q-streak">0</div><div class="stat-lbl">🔥 Streak</div></div>
+  </div>
+  <div id="progress-wrap" class="progress-wrap" style="display:none">
+    <div class="progress-txt" id="progress-txt"></div>
+    <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+  </div>
+  <div class="question-card">
+    <div id="q-flag" class="flag" style="display:none"></div>
+    <div class="question-text" id="q-text"></div>
+    <input type="text" id="q-input" placeholder="Jouw antwoord..." style="display:none">
+    <div class="correct-msg" id="q-correct" style="display:none"></div>
+    <div id="q-options"></div>
+  </div>
+  <button class="btn" style="text-align:center;color:#8e8e93;" onclick="goHome()">Stop</button>
+</div>
+
+<div id="results" class="screen">
+  <div class="result-big" id="r-emoji">🎉</div>
+  <div class="result-msg" id="r-msg"></div>
+  <div class="score-row">
+    <div class="stat"><div class="stat-val" id="r-good">0</div><div class="stat-lbl">Goed</div></div>
+    <div class="stat"><div class="stat-val" id="r-wrong">0</div><div class="stat-lbl">Fout</div></div>
+    <div class="stat"><div class="stat-val" id="r-pct">0%</div><div class="stat-lbl">Score</div></div>
+  </div>
+  <div class="card" style="text-align:center;">
+    <div style="font-size:14px;color:#8e8e93;">Langste streak</div>
+    <div style="font-size:28px;font-weight:700;margin-top:4px;">🔥 <span id="r-streak">0</span></div>
+  </div>
+  <button class="btn primary" onclick="playAgain()" style="margin-top:8px">Nog een keer</button>
+  <button class="btn" style="text-align:center;color:#8e8e93;" onclick="goHome()">Home</button>
+</div>
+
+</div>
+<script>
+const DATA=[
+  {country:"Afghanistan",capital:"Kabul",flag:"🇦🇫",region:"asia"},
+  {country:"Albanië",capital:"Tirana",flag:"🇦🇱",region:"europe"},
+  {country:"Algerije",capital:"Algiers",flag:"🇩🇿",region:"africa"},
+  {country:"Angola",capital:"Luanda",flag:"🇦🇴",region:"africa"},
+  {country:"Argentinië",capital:"Buenos Aires",flag:"🇦🇷",region:"americas"},
+  {country:"Armenië",capital:"Jerevan",flag:"🇦🇲",region:"asia"},
+  {country:"Australië",capital:"Canberra",flag:"🇦🇺",region:"oceania"},
+  {country:"Oostenrijk",capital:"Wenen",flag:"🇦🇹",region:"europe"},
+  {country:"Azerbeidzjan",capital:"Bakoe",flag:"🇦🇿",region:"asia"},
+  {country:"Bangladesh",capital:"Dhaka",flag:"🇧🇩",region:"asia"},
+  {country:"België",capital:"Brussel",flag:"🇧🇪",region:"europe"},
+  {country:"Bolivia",capital:"Sucre",flag:"🇧🇴",region:"americas"},
+  {country:"Bosnië en Herzegovina",capital:"Sarajevo",flag:"🇧🇦",region:"europe"},
+  {country:"Brazilië",capital:"Brasilia",flag:"🇧🇷",region:"americas"},
+  {country:"Bulgarije",capital:"Sofia",flag:"🇧🇬",region:"europe"},
+  {country:"Cambodja",capital:"Phnom-Penh",flag:"🇰🇭",region:"asia"},
+  {country:"Kameroen",capital:"Yaoundé",flag:"🇨🇲",region:"africa"},
+  {country:"Canada",capital:"Ottawa",flag:"🇨🇦",region:"americas"},
+  {country:"Chili",capital:"Santiago",flag:"🇨🇱",region:"americas"},
+  {country:"China",capital:"Peking",flag:"🇨🇳",region:"asia"},
+  {country:"Colombia",capital:"Bogotá",flag:"🇨🇴",region:"americas"},
+  {country:"Congo (DRC)",capital:"Kinshasa",flag:"🇨🇩",region:"africa"},
+  {country:"Costa Rica",capital:"San José",flag:"🇨🇷",region:"americas"},
+  {country:"Kroatië",capital:"Zagreb",flag:"🇭🇷",region:"europe"},
+  {country:"Cuba",capital:"Havana",flag:"🇨🇺",region:"americas"},
+  {country:"Tsjechië",capital:"Praag",flag:"🇨🇿",region:"europe"},
+  {country:"Denemarken",capital:"Kopenhagen",flag:"🇩🇰",region:"europe"},
+  {country:"Ecuador",capital:"Quito",flag:"🇪🇨",region:"americas"},
+  {country:"Egypte",capital:"Caïro",flag:"🇪🇬",region:"africa"},
+  {country:"Ethiopië",capital:"Addis Abeba",flag:"🇪🇹",region:"africa"},
+  {country:"Finland",capital:"Helsinki",flag:"🇫🇮",region:"europe"},
+  {country:"Frankrijk",capital:"Parijs",flag:"🇫🇷",region:"europe"},
+  {country:"Georgië",capital:"Tbilisi",flag:"🇬🇪",region:"asia"},
+  {country:"Duitsland",capital:"Berlijn",flag:"🇩🇪",region:"europe"},
+  {country:"Ghana",capital:"Accra",flag:"🇬🇭",region:"africa"},
+  {country:"Griekenland",capital:"Athene",flag:"🇬🇷",region:"europe"},
+  {country:"Guatemala",capital:"Guatemala-Stad",flag:"🇬🇹",region:"americas"},
+  {country:"Hongarije",capital:"Boedapest",flag:"🇭🇺",region:"europe"},
+  {country:"India",capital:"New Delhi",flag:"🇮🇳",region:"asia"},
+  {country:"Indonesië",capital:"Jakarta",flag:"🇮🇩",region:"asia"},
+  {country:"Iran",capital:"Teheran",flag:"🇮🇷",region:"asia"},
+  {country:"Irak",capital:"Bagdad",flag:"🇮🇶",region:"asia"},
+  {country:"Ierland",capital:"Dublin",flag:"🇮🇪",region:"europe"},
+  {country:"Israël",capital:"Jeruzalem",flag:"🇮🇱",region:"asia"},
+  {country:"Italië",capital:"Rome",flag:"🇮🇹",region:"europe"},
+  {country:"Jamaica",capital:"Kingston",flag:"🇯🇲",region:"americas"},
+  {country:"Japan",capital:"Tokio",flag:"🇯🇵",region:"asia"},
+  {country:"Jordanië",capital:"Amman",flag:"🇯🇴",region:"asia"},
+  {country:"Kazachstan",capital:"Astana",flag:"🇰🇿",region:"asia"},
+  {country:"Kenia",capital:"Nairobi",flag:"🇰🇪",region:"africa"},
+  {country:"Noord-Korea",capital:"Pyongyang",flag:"🇰🇵",region:"asia"},
+  {country:"Zuid-Korea",capital:"Seoul",flag:"🇰🇷",region:"asia"},
+  {country:"Kosovo",capital:"Pristina",flag:"🇽🇰",region:"europe"},
+  {country:"Koeweit",capital:"Koeweit-Stad",flag:"🇰🇼",region:"asia"},
+  {country:"Laos",capital:"Vientiane",flag:"🇱🇦",region:"asia"},
+  {country:"Letland",capital:"Riga",flag:"🇱🇻",region:"europe"},
+  {country:"Libanon",capital:"Beiroet",flag:"🇱🇧",region:"asia"},
+  {country:"Libië",capital:"Tripoli",flag:"🇱🇾",region:"africa"},
+  {country:"Litouwen",capital:"Vilnius",flag:"🇱🇹",region:"europe"},
+  {country:"Luxemburg",capital:"Luxemburg",flag:"🇱🇺",region:"europe"},
+  {country:"Madagaskar",capital:"Antananarivo",flag:"🇲🇬",region:"africa"},
+  {country:"Maleisië",capital:"Kuala Lumpur",flag:"🇲🇾",region:"asia"},
+  {country:"Mali",capital:"Bamako",flag:"🇲🇱",region:"africa"},
+  {country:"Mexico",capital:"Mexico-Stad",flag:"🇲🇽",region:"americas"},
+  {country:"Moldavië",capital:"Chișinău",flag:"🇲🇩",region:"europe"},
+  {country:"Mongolië",capital:"Ulaanbaatar",flag:"🇲🇳",region:"asia"},
+  {country:"Montenegro",capital:"Podgorica",flag:"🇲🇪",region:"europe"},
+  {country:"Marokko",capital:"Rabat",flag:"🇲🇦",region:"africa"},
+  {country:"Mozambique",capital:"Maputo",flag:"🇲🇿",region:"africa"},
+  {country:"Myanmar",capital:"Naypyidaw",flag:"🇲🇲",region:"asia"},
+  {country:"Nepal",capital:"Kathmandu",flag:"🇳🇵",region:"asia"},
+  {country:"Nederland",capital:"Amsterdam",flag:"🇳🇱",region:"europe"},
+  {country:"Nieuw-Zeeland",capital:"Wellington",flag:"🇳🇿",region:"oceania"},
+  {country:"Nicaragua",capital:"Managua",flag:"🇳🇮",region:"americas"},
+  {country:"Niger",capital:"Niamey",flag:"🇳🇪",region:"africa"},
+  {country:"Nigeria",capital:"Abuja",flag:"🇳🇬",region:"africa"},
+  {country:"Noord-Macedonië",capital:"Skopje",flag:"🇲🇰",region:"europe"},
+  {country:"Noorwegen",capital:"Oslo",flag:"🇳🇴",region:"europe"},
+  {country:"Oman",capital:"Muscat",flag:"🇴🇲",region:"asia"},
+  {country:"Pakistan",capital:"Islamabad",flag:"🇵🇰",region:"asia"},
+  {country:"Panama",capital:"Panama-Stad",flag:"🇵🇦",region:"americas"},
+  {country:"Paraguay",capital:"Asunción",flag:"🇵🇾",region:"americas"},
+  {country:"Peru",capital:"Lima",flag:"🇵🇪",region:"americas"},
+  {country:"Filipijnen",capital:"Manilla",flag:"🇵🇭",region:"asia"},
+  {country:"Polen",capital:"Warschau",flag:"🇵🇱",region:"europe"},
+  {country:"Portugal",capital:"Lissabon",flag:"🇵🇹",region:"europe"},
+  {country:"Qatar",capital:"Doha",flag:"🇶🇦",region:"asia"},
+  {country:"Roemenië",capital:"Boekarest",flag:"🇷🇴",region:"europe"},
+  {country:"Rusland",capital:"Moskou",flag:"🇷🇺",region:"europe"},
+  {country:"Rwanda",capital:"Kigali",flag:"🇷🇼",region:"africa"},
+  {country:"Saudi-Arabië",capital:"Riyad",flag:"🇸🇦",region:"asia"},
+  {country:"Senegal",capital:"Dakar",flag:"🇸🇳",region:"africa"},
+  {country:"Servië",capital:"Belgrado",flag:"🇷🇸",region:"europe"},
+  {country:"Slowakije",capital:"Bratislava",flag:"🇸🇰",region:"europe"},
+  {country:"Slovenië",capital:"Ljubljana",flag:"🇸🇮",region:"europe"},
+  {country:"Somalië",capital:"Mogadishu",flag:"🇸🇴",region:"africa"},
+  {country:"Zuid-Afrika",capital:"Pretoria",flag:"🇿🇦",region:"africa"},
+  {country:"Spanje",capital:"Madrid",flag:"🇪🇸",region:"europe"},
+  {country:"Sri Lanka",capital:"Sri Jayawardenepura Kotte",flag:"🇱🇰",region:"asia"},
+  {country:"Soedan",capital:"Khartoem",flag:"🇸🇩",region:"africa"},
+  {country:"Zweden",capital:"Stockholm",flag:"🇸🇪",region:"europe"},
+  {country:"Zwitserland",capital:"Bern",flag:"🇨🇭",region:"europe"},
+  {country:"Syrië",capital:"Damascus",flag:"🇸🇾",region:"asia"},
+  {country:"Taiwan",capital:"Taipei",flag:"🇹🇼",region:"asia"},
+  {country:"Tanzania",capital:"Dodoma",flag:"🇹🇿",region:"africa"},
+  {country:"Thailand",capital:"Bangkok",flag:"🇹🇭",region:"asia"},
+  {country:"Tunesië",capital:"Tunis",flag:"🇹🇳",region:"africa"},
+  {country:"Turkije",capital:"Ankara",flag:"🇹🇷",region:"asia"},
+  {country:"Oekraïne",capital:"Kyiv",flag:"🇺🇦",region:"europe"},
+  {country:"Verenigde Arabische Emiraten",capital:"Abu Dhabi",flag:"🇦🇪",region:"asia"},
+  {country:"Verenigd Koninkrijk",capital:"Londen",flag:"🇬🇧",region:"europe"},
+  {country:"Verenigde Staten",capital:"Washington D.C.",flag:"🇺🇸",region:"americas"},
+  {country:"Uruguay",capital:"Montevideo",flag:"🇺🇾",region:"americas"},
+  {country:"Oezbekistan",capital:"Tasjkent",flag:"🇺🇿",region:"asia"},
+  {country:"Venezuela",capital:"Caracas",flag:"🇻🇪",region:"americas"},
+  {country:"Vietnam",capital:"Hanoi",flag:"🇻🇳",region:"asia"},
+  {country:"Jemen",capital:"Sanaa",flag:"🇾🇪",region:"asia"},
+  {country:"Zambia",capital:"Lusaka",flag:"🇿🇲",region:"africa"},
+  {country:"Zimbabwe",capital:"Harare",flag:"🇿🇼",region:"africa"},
+  {country:"IJsland",capital:"Reykjavik",flag:"🇮🇸",region:"europe"},
+  {country:"Fiji",capital:"Suva",flag:"🇫🇯",region:"oceania"},
+  {country:"Papua-Nieuw-Guinea",capital:"Port Moresby",flag:"🇵🇬",region:"oceania"},
+  {country:"El Salvador",capital:"San Salvador",flag:"🇸🇻",region:"americas"},
+  {country:"Honduras",capital:"Tegucigalpa",flag:"🇭🇳",region:"americas"},
+  {country:"Haïti",capital:"Port-au-Prince",flag:"🇭🇹",region:"americas"},
+  {country:"Dominicaanse Republiek",capital:"Santo Domingo",flag:"🇩🇴",region:"americas"},
+  {country:"Tunesië",capital:"Tunis",flag:"🇹🇳",region:"africa"},
+  {country:"Liberia",capital:"Monrovia",flag:"🇱🇷",region:"africa"},
+  {country:"Sierra Leone",capital:"Freetown",flag:"🇸🇱",region:"africa"},
+  {country:"Togo",capital:"Lomé",flag:"🇹🇬",region:"africa"},
+  {country:"Benin",capital:"Porto-Novo",flag:"🇧🇯",region:"africa"},
+  {country:"Burkina Faso",capital:"Ouagadougou",flag:"🇧🇫",region:"africa"},
+  {country:"Ivoorkust",capital:"Yamoussoukro",flag:"🇨🇮",region:"africa"},
+  {country:"Gabon",capital:"Libreville",flag:"🇬🇦",region:"africa"},
+  {country:"Namibië",capital:"Windhoek",flag:"🇳🇦",region:"africa"},
+  {country:"Botswana",capital:"Gaborone",flag:"🇧🇼",region:"africa"},
+  {country:"Lesotho",capital:"Maseru",flag:"🇱🇸",region:"africa"},
+  {country:"Swaziland",capital:"Mbabane",flag:"🇸🇿",region:"africa"},
+  {country:"Oeganda",capital:"Kampala",flag:"🇺🇬",region:"africa"},
+  {country:"Kameroen",capital:"Yaoundé",flag:"🇨🇲",region:"africa"},
+];
+
+let quizType='capitals',region='all',mode='endless',challengeCount=10;
+let good=0,wrong=0,streak=0,maxStreak=0,questionNum=0;
+let currentQ=null,answered=false,pool=[],weights={};
+
+function selectType(t){
+  quizType=t;
+  document.querySelectorAll('.type-btn').forEach(b=>b.classList.remove('selected'));
+  document.getElementById('tb-'+t).classList.add('selected');
+}
+function selectRegion(r,el){
+  region=r;
+  document.querySelectorAll('.reg-btn').forEach(b=>b.classList.remove('selected'));
+  el.classList.add('selected');
+}
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+function selectChallenge(n,el){
+  challengeCount=n;
+  document.querySelectorAll('.chal-btn').forEach(b=>b.classList.remove('selected'));
+  el.classList.add('selected');
+}
+function getPool(){
+  let d=region==='all'?DATA:DATA.filter(x=>x.region===region);
+  return d.length>=4?d:DATA;
+}
+function getEffectiveType(){
+  if(quizType==='mix'){const t=['capitals','countries','flags'];return t[Math.floor(Math.random()*t.length)];}
+  return quizType;
+}
+function weightedRandom(arr){
+  let total=arr.reduce((s,x)=>s+(weights[x.country]||1),0);
+  let r=Math.random()*total;
+  for(let x of arr){r-=(weights[x.country]||1);if(r<=0)return x;}
+  return arr[arr.length-1];
+}
+function startEndless(){
+  mode='endless';good=0;wrong=0;streak=0;maxStreak=0;questionNum=0;
+  pool=getPool();weights={};
+  document.getElementById('progress-wrap').style.display='none';
+  showScreen('quiz');nextQuestion();
+}
+function startChallenge(){
+  mode='challenge';good=0;wrong=0;streak=0;maxStreak=0;questionNum=0;
+  pool=getPool();weights={};
+  document.getElementById('progress-wrap').style.display='block';
+  showScreen('quiz');nextQuestion();
+}
+function nextQuestion(){
+  if(mode==='challenge'&&questionNum>=challengeCount){showResults();return;}
+  answered=false;questionNum++;updateStats();
+  if(mode==='challenge'){
+    document.getElementById('progress-txt').textContent='Vraag '+questionNum+' van '+challengeCount;
+    document.getElementById('progress-fill').style.width=Math.round(((questionNum-1)/challengeCount)*100)+'%';
+  }
+  const type=getEffectiveType();
+  currentQ={item:weightedRandom(pool),type};
+  const qFlag=document.getElementById('q-flag');
+  const qText=document.getElementById('q-text');
+  const qInput=document.getElementById('q-input');
+  const qOpts=document.getElementById('q-options');
+  const qCorrect=document.getElementById('q-correct');
+  qCorrect.style.display='none';qInput.value='';qOpts.innerHTML='';
+  if(type==='flags'){
+    qFlag.style.display='block';qFlag.textContent=currentQ.item.flag;
+    qText.textContent='Van welk land is deze vlag?';
+    qInput.style.display='none';
+    getOptions(currentQ.item,pool).forEach(opt=>{
+      const b=document.createElement('button');
+      b.className='btn';b.textContent=opt.country;
+      b.onclick=()=>{if(!answered)handleOption(b,opt);};
+      qOpts.appendChild(b);
+    });
+  } else {
+    qFlag.style.display='none';
+    qText.textContent=type==='capitals'?'Wat is de hoofdstad van '+currentQ.item.country+'?':'In welk land ligt '+currentQ.item.capital+'?';
+    qInput.style.display='block';
+    qInput.placeholder=type==='capitals'?'Hoofdstad...':'Land...';
+    setTimeout(()=>qInput.focus(),200);
+    const b=document.createElement('button');
+    b.className='btn primary';b.textContent='Controleer';b.id='check-btn';
+    b.onclick=checkAnswer;qOpts.appendChild(b);
+  }
+}
+function getOptions(correct,all){
+  let opts=[correct];
+  let others=all.filter(x=>x.country!==correct.country).sort(()=>Math.random()-0.5).slice(0,3);
+  return [...opts,...others].sort(()=>Math.random()-0.5);
+}
+function levenshtein(a,b){
+  const m=a.length,n=b.length;
+  const dp=Array.from({length:m+1},(_,i)=>Array.from({length:n+1},(_,j)=>i===0?j:j===0?i:0));
+  for(let i=1;i<=m;i++)for(let j=1;j<=n;j++)dp[i][j]=a[i-1]===b[j-1]?dp[i-1][j-1]:1+Math.min(dp[i-1][j],dp[i][j-1],dp[i-1][j-1]);
+  return dp[m][n];
+}
+function fuzzyMatch(input,answer){
+  const norm=s=>s.toLowerCase().replace(/[-\s\.]/g,'').normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  const a=norm(input),b=norm(answer);
+  if(a===b)return true;
+  if(b.includes(a)&&a.length>=b.length-3)return true;
+  return levenshtein(a,b)<=Math.max(1,Math.floor(b.length*0.2));
+}
+function checkAnswer(){
+  if(answered)return;
+  const input=document.getElementById('q-input').value.trim();
+  if(!input)return;
+  const correct=currentQ.type==='capitals'?currentQ.item.capital:currentQ.item.country;
+  const isCorrect=fuzzyMatch(input,correct);
+  answered=true;
+  const cb=document.getElementById('check-btn');if(cb)cb.style.display='none';
+  const qCorrect=document.getElementById('q-correct');
+  if(isCorrect){handleCorrect();qCorrect.innerHTML='✅ Goed! Het antwoord is <strong>'+correct+'</strong>';}
+  else{handleWrong();qCorrect.innerHTML='❌ Het juiste antwoord is <strong>'+correct+'</strong>';}
+  qCorrect.style.display='block';
+  addNextBtn();
+}
+function handleOption(btn,opt){
+  answered=true;
+  const isCorrect=opt.country===currentQ.item.country;
+  document.querySelectorAll('#q-options .btn').forEach(b=>{
+    if(b.textContent===currentQ.item.country)b.className='btn correct';
+    else if(b===btn&&!isCorrect)b.className='btn wrong';
+    b.onclick=null;
+  });
+  if(isCorrect)handleCorrect();else handleWrong();
+  addNextBtn();
+}
+function addNextBtn(){
+  const b=document.createElement('button');
+  b.className='btn primary';b.textContent='Volgende →';
+  b.onclick=nextQuestion;
+  document.getElementById('q-options').appendChild(b);
+}
+function handleCorrect(){good++;streak++;if(streak>maxStreak)maxStreak=streak;weights[currentQ.item.country]=Math.max(0.5,(weights[currentQ.item.country]||1)*0.7);updateStats();}
+function handleWrong(){wrong++;streak=0;weights[currentQ.item.country]=(weights[currentQ.item.country]||1)*2.5;updateStats();}
+function updateStats(){
+  document.getElementById('q-good').textContent=good;
+  document.getElementById('q-wrong').textContent=wrong;
+  document.getElementById('q-streak').textContent=streak;
+}
+function showResults(){
+  const total=good+wrong,pct=total>0?Math.round((good/total)*100):0;
+  document.getElementById('r-good').textContent=good;
+  document.getElementById('r-wrong').textContent=wrong;
+  document.getElementById('r-pct').textContent=pct+'%';
+  document.getElementById('r-streak').textContent=maxStreak;
+  const emoji=pct===100?'🎉':pct>=80?'💪':pct>=60?'👍':'📚';
+  const msg=pct===100?'Perfect! Geen enkele fout!':pct>=80?'Heel goed! Bijna perfect.':pct>=60?'Goed bezig, blijf oefenen!':'Oefening baart kunst!';
+  document.getElementById('r-emoji').textContent=emoji;
+  document.getElementById('r-msg').textContent=msg;
+  saveHighscore();showScreen('results');
+}
+function saveHighscore(){
+  try{
+    let hs=JSON.parse(localStorage.getItem('geo_hs')||'[]');
+    hs.push({score:good,streak:maxStreak,mode,count:challengeCount,date:new Date().toLocaleDateString('nl-NL')});
+    hs.sort((a,b)=>b.score-a.score);
+    localStorage.setItem('geo_hs',JSON.stringify(hs.slice(0,8)));
+  }catch(e){}
+  renderHighscores();
+}
+function renderHighscores(){
+  try{
+    const hs=JSON.parse(localStorage.getItem('geo_hs')||'[]');
+    const el=document.getElementById('hs-list');
+    if(!hs.length){el.innerHTML='<p class="muted">Nog geen scores</p>';return;}
+    el.innerHTML=hs.map((h,i)=>`<div class="hs-row"><span class="hs-num">#${i+1}</span><span>${h.mode==='challenge'?h.count+' vragen':'Eindeloos'}</span><span>${h.score} goed · 🔥${h.streak}</span><span style="color:#8e8e93">${h.date}</span></div>`).join('');
+  }catch(e){}
+}
+function playAgain(){mode==='endless'?startEndless():startChallenge();}
+function goHome(){renderHighscores();showScreen('home');}
+renderHighscores();
+</script>
+</body>
+</html>
